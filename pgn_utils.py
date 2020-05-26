@@ -97,6 +97,8 @@ def clean_pgn(pgn_file: str, splitter: str = None, write_to_file: bool = False) 
     if len(games) < splitter_games_number:
         raise Exception("Games if file less than specified in splitter!")
 
+    print(f'Found {len(games)} games')
+
     result = []
 
     if splitter and splitter.lower() not in 'wb':
@@ -260,10 +262,11 @@ def process_pgn(file_name, splitter='w', dest_file=None):
 
             f.write(header + '\r\n' + game + '  *  \r\n\r\n')
             chapter += 1
+    print(f'Successfully merged into {len(res)} chapters\n result file: {dest_file}')
 
 
 if __name__ == '__main__':
-    print("PGN-utils.")
+    # print("PGN-utils.")
 
     parser = argparse.ArgumentParser(add_help=True, description="Clean or merge your chess games")
 
