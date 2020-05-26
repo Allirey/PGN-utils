@@ -1,4 +1,4 @@
-# Chess PGN file cleaner / merger (Beta)
+# Chess PGN file cleaner / merger
 ##### Removes text commentary and merge games in file specified by rules
 
 ### Usage:
