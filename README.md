@@ -10,7 +10,7 @@ in progress
 
 
 ##### Note:
-Keep in mind: it is not that program which merge multiple pgn __files__ in one, merges affects only on  __games__. For such feature you can write your own program, just type in command line:
+Keep in mind: it is NOT that program which merge multiple pgn __files__ in one, merges affects only on  __games__. For such feature you can write your own program, just type in command line:
 
 for windows: \
 `

@@ -1,5 +1,6 @@
 #!/bin/python3
 
+import sys
 import io
 import os
 import re
@@ -86,8 +87,7 @@ def clean_pgn(pgn_file: str, splitter: str = None, write_to_file: bool = False) 
                 for ch in line:
                     if ch in '{}':
                         is_commentary = {'{': True, '}': False}[ch]
-                        continue
-                    if not is_commentary:
+                    elif not is_commentary:
                         cleaned_line += ch
                 game += cleaned_line.lstrip()
 
@@ -263,4 +263,26 @@ def process_pgn(file_name, splitter='w', dest_file=None):
 
 
 if __name__ == '__main__':
-    pass
+    print("PGN-utils.")
+
+    parser = argparse.ArgumentParser(add_help=True, description="Clean or merge your chess games")
+
+    parser.add_argument('filename', action='store', metavar="pathname",
+                        help='[[domain/]username[:password]@]<targetName or address>')
+    parser.add_argument('splitter', action='store', default='w', help="rules to split file:"
+            "'w' - group games by white player and merge,"
+            "'b' - group games by black player and merge,"
+            "'a' - merge all games in file,"
+            "custom: string with numbers separated with ':' where number is how much games in a row will be merged"
+                "into one chapter, each number produce new chapter in result file."
+                "e.g.: '5:2:4' is 3 chapters with 5, 2 and 4 games merged, rest of the games will be ignored.")
+    parser.add_argument('-o', action='store', metavar="pathname",
+                        help='destination file name. default: [your_file_name]_edited.pgn')
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+
+    options = parser.parse_args()
+
+    process_pgn(options.filename, options.splitter, options.o)
