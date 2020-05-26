@@ -268,7 +268,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Clean or merge your chess games")
 
     parser.add_argument('filename', action='store', metavar="pathname",
-                        help='[[domain/]username[:password]@]<targetName or address>')
+                        help='path to your pgn file')
     parser.add_argument('splitter', action='store', default='w', help="rules to split file:"
             "'w' - group games by white player and merge,"
             "'b' - group games by black player and merge,"
