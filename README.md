@@ -25,7 +25,7 @@ optional arguments:
 ### Example:
 in progress
 
-##TODO:
+## TODO:
 
 * option to keep NAG tags (marks for moves such as "!" or "!?")
 * option to merge games from multiple files (not sure about this, read __Note__ below)
