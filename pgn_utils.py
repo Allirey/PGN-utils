@@ -11,7 +11,7 @@ from pprint import pprint
 
 def _make_file_name(file_name: str):
     """util func for creating file name, which related to original file name"""
-    return file_name.split('/')[-1].rstrip('.pgn') + '_edited.pgn'
+    return file_name.split('/')[-1][:-4] + '_edited.pgn'
 
 
 def _get_moves_from_game(pgn: str) -> list:
@@ -97,7 +97,7 @@ def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -
     if len(games) < splitter_games_number:
         raise Exception("Games if file less than specified in splitter!")
 
-    print(f'Found {len(games)} games')
+    print(f'\033[94mFound {len(games)} games')
 
     result = []
 
@@ -212,7 +212,7 @@ def merge_lines(move_lines: list) -> str:
         if keys_len > 1:
             for k, v in list(x for x in tree.items())[1:]:
                 pgn += '( '
-                pgn_maker({k: v}, move_count - 1, not odd)
+                pgn_maker({k: v}, move_count - (0 if odd else 1), not odd)
                 pgn += ') '
         pgn_maker(tree[main_move], move_count, odd)
 
@@ -221,7 +221,7 @@ def merge_lines(move_lines: list) -> str:
     return pgn
 
 
-def process_pgn(file_name, splitter='w', dest_file=None):
+def process_pgn(file_name: str, splitter: str = 'w', dest_file: str = None):
     """
     all-in-one. Clean pgn, and merge specified games into chapters and write to result file
 
@@ -262,12 +262,12 @@ def process_pgn(file_name, splitter='w', dest_file=None):
 
             f.write(header + '\r\n' + game + '  *  \r\n\r\n')
             chapter += 1
-    print(f'Successfully merged into {len(res)} chapters\n result file: {dest_file}')
+    print(f'Successfully merged into {len(res)} chapters\nresult file: {dest_file}\033[0m')
 
 
 if __name__ == '__main__':
     # print("PGN-utils.")
-
+    print('\033[95m')
     parser = argparse.ArgumentParser(add_help=True, description="Clean or merge your chess games")
 
     parser.add_argument('filename', action='store', metavar="pathname",
