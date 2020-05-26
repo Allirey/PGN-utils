@@ -35,7 +35,7 @@ def _get_moves_from_game(pgn: str) -> list:
     return moves
 
 
-def clean_pgn(pgn_file: str, splitter: str = None, write_to_file: bool = False) -> list:
+def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -> list:
     """removes text commentary from file, can split files by player name or by specific games number in db pgn file
     additionally return as text pgn file or as list of lists with games
 
@@ -59,11 +59,11 @@ def clean_pgn(pgn_file: str, splitter: str = None, write_to_file: bool = False) 
         >>> [["...some game content...", ], ]
     """
     splitter_games_number = 0
-    if splitter and splitter.lower() not in 'wb':
+    if splitter and splitter.lower() not in 'wba':
         try:
             splitter_games_number = splitter if not splitter else sum(list(map(int, splitter.split(':'))))
         except Exception as e:
-            raise Exception('incorrect splitter data! should be list of number')
+            raise Exception("incorrect splitter data! should be list of number separated with ':' or literal w/b/a")
 
     games = []
     game = ''
@@ -102,8 +102,9 @@ def clean_pgn(pgn_file: str, splitter: str = None, write_to_file: bool = False) 
     result = []
 
     if splitter and splitter.lower() not in 'wb':
+        splitter = [len(games)] if splitter.lower() == 'a' else list(map(int, splitter.split(':')))
         i = 0
-        for j in list(map(int, splitter.split(':'))):
+        for j in splitter:
             result.append(games[i:i + j])
             i += j
     elif splitter:
@@ -222,8 +223,7 @@ def merge_lines(move_lines: list) -> str:
 
 def process_pgn(file_name, splitter='w', dest_file=None):
     """
-    all-in-one. Clean pgn, split it into separate files with given numbers of games in each, merge games in each files,
-    and write merged games as chapters to result file
+    all-in-one. Clean pgn, and merge specified games into chapters and write to result file
 
     Args:
         file_name (str): source file
@@ -273,12 +273,12 @@ if __name__ == '__main__':
     parser.add_argument('filename', action='store', metavar="pathname",
                         help='path to your pgn file')
     parser.add_argument('splitter', action='store', default='w', help="rules to split file:"
-            "'w' - group games by white player and merge,"
-            "'b' - group games by black player and merge,"
-            "'a' - merge all games in file,"
-            "custom: string with numbers separated with ':' where number is how much games in a row will be merged"
-                "into one chapter, each number produce new chapter in result file."
-                "e.g.: '5:2:4' is 3 chapters with 5, 2 and 4 games merged, rest of the games will be ignored.")
+                                                                      "'w' - group games by white player and merge,"
+                                                                      "'b' - group games by black player and merge,"
+                                                                      "'a' - merge all games in file,"
+                                                                      "custom: string with numbers separated with ':' where number is how much games in a row will be merged"
+                                                                      "into one chapter, each number produce new chapter in result file."
+                                                                      "e.g.: '5:2:4' is 3 chapters with 5, 2 and 4 games merged, rest of the games will be ignored.")
     parser.add_argument('-o', action='store', metavar="pathname",
                         help='destination file name. default: [your_file_name]_edited.pgn')
 

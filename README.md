@@ -10,7 +10,7 @@ positional arguments:
   splitter     rules to split file:
                 'w' - group games by white player and merge,
                 'b' - group games by black player and merge,
-                'a'(not implemented ATM) - merge all games in file,
+                'a' - merge all games in file,
                 custom: string with numbers separated with ':' where number is how much games 
                     in a row will be mergedinto one chapter, each number produce new chapter 
                     in result file.e.g.: '5:2:4' is 3 chapters with 5, 2 and 4 games merged,
