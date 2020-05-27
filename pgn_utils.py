@@ -6,7 +6,6 @@ import os
 import re
 import argparse
 from collections import deque, defaultdict
-from pprint import pprint
 
 
 def _make_file_name(file_name: str):
@@ -58,12 +57,6 @@ def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -
         returns list of lists(!) with games, even if there is only 1 game it looks like this:
         >>> [["...some game content...", ], ]
     """
-    splitter_games_number = 0
-    if splitter and splitter.lower() not in 'wba':
-        try:
-            splitter_games_number = splitter if not splitter else sum(list(map(int, splitter.split(':'))))
-        except Exception as e:
-            raise Exception("incorrect splitter data! should be list of number separated with ':' or literal w/b/a")
 
     games = []
     game = ''
@@ -94,9 +87,6 @@ def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -
         if len(game) > 0 and len(''.join(game.split('\n'))) > 0:
             games.append(game)
 
-    if len(games) < splitter_games_number:
-        raise Exception("Games if file less than specified in splitter!")
-
     print(f'\033[94mFound {len(games)} games')
 
     result = []
@@ -113,7 +103,6 @@ def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -
 
         for game in games:
             games_by_player[re.findall(pattern, game)[0].strip()].append(game)
-            # print(re.findall(pattern, game)[0].strip())
 
         for games in games_by_player.values():
             result.append(games)
@@ -168,9 +157,6 @@ def split_game_to_lines(game: str) -> list:
             move_stack.append(move)
     res.append(move_stack)
 
-    # for variant in res:
-    # print(variant)
-
     return res[::-1]
 
 
@@ -211,8 +197,8 @@ def merge_lines(move_lines: list) -> str:
         odd = not odd
         if keys_len > 1:
             for k, v in list(x for x in tree.items())[1:]:
-                pgn += '( '
-                pgn_maker({k: v}, move_count - (0 if odd else 1), not odd)
+                pgn += '( ' + (f'{move_count}' if odd else '')
+                pgn_maker({k: v}, move_count - (not odd), not odd)
                 pgn += ') '
         pgn_maker(tree[main_move], move_count, odd)
 
@@ -272,7 +258,7 @@ if __name__ == '__main__':
 
     parser.add_argument('filename', action='store', metavar="pathname",
                         help='path to your pgn file')
-    parser.add_argument('splitter', action='store', default='w', help="rules to split file:"
+    parser.add_argument('splitter', action='store', nargs='?', default='w', help="rules to split file:"
                                                                       "'w' - group games by white player and merge,"
                                                                       "'b' - group games by black player and merge,"
                                                                       "'a' - merge all games in file,"

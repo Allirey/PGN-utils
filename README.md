@@ -23,7 +23,7 @@ optional arguments:
 
 
 ### Example:
-###### some_pgn_file.pgn ( with random selected games for this example)
+###### some_pgn_file.pgn
 ```
 ﻿[Event "London knockout"]
 [Site "London"]
@@ -79,7 +79,7 @@ python3 pgn_utils.py some_pgn_file.pgn a
 * option to merge games from multiple files (not sure about this, read __Note__ below)
 
 ##### Note:
-Keep in mind: it is NOT that program which merge multiple pgn __files__ in one, merges affects only on  __games__. For such feature you can write your own program, just type in command line:
+Keep in mind: Merges affects only on __games__ in single file. It is NOT that program which merge multiple pgn __files__ in one. For such feature you can write your own program, just type in command line:
 
 for windows: \
 `
