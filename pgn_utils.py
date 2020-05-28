@@ -108,7 +108,7 @@ def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -
             result.append(games)
 
     dir_name = 'result'
-    if not os.path.isdir(dir_name):
+    if not os.path.isdir(dir_name) and write_to_file:
         os.mkdir(dir_name)
 
     if write_to_file:
@@ -184,23 +184,23 @@ def merge_lines(move_lines: list) -> str:
             curr_node = curr_node[move]
     pgn = ''
 
-    def pgn_maker(tree, move_count=0, odd=True):
-        keys_len = len(tree.keys())
+    def pgn_maker(_tree, move_count=0, odd=True):
+        keys_len = len(_tree.keys())
         if keys_len == 0:
             return
         nonlocal pgn
-        main_move = list(tree.keys())[0]
+        main_move = list(_tree.keys())[0]
         if odd:
             move_count += 1
 
         pgn += ((str(move_count) + '. ') if odd else '') + main_move + ' '
         odd = not odd
         if keys_len > 1:
-            for k, v in list(x for x in tree.items())[1:]:
+            for k, v in list(x for x in _tree.items())[1:]:
                 pgn += '( ' + (f'{move_count}' if odd else '')
                 pgn_maker({k: v}, move_count - (not odd), not odd)
                 pgn += ') '
-        pgn_maker(tree[main_move], move_count, odd)
+        pgn_maker(_tree[main_move], move_count, odd)
 
     pgn_maker(tree['root'])
 
@@ -258,13 +258,15 @@ if __name__ == '__main__':
 
     parser.add_argument('filename', action='store', metavar="pathname",
                         help='path to your pgn file')
-    parser.add_argument('splitter', action='store', nargs='?', default='w', help="rules to split file:"
-                                                                      "'w' - group games by white player and merge,"
-                                                                      "'b' - group games by black player and merge,"
-                                                                      "'a' - merge all games in file,"
-                                                                      "custom: string with numbers separated with ':' where number is how much games in a row will be merged"
-                                                                      "into one chapter, each number produce new chapter in result file."
-                                                                      "e.g.: '5:2:4' is 3 chapters with 5, 2 and 4 games merged, rest of the games will be ignored.")
+    parser.add_argument(
+        'splitter', action='store', nargs='?', default='w',
+        help="rules to split file:"
+             "'w' - group games by white player and merge,"
+             "'b' - group games by black player and merge,"
+             "'a' - merge all games in file,"
+             "custom: string with numbers separated with ':' where number is how much games in a row will be merged"
+             "into one chapter, each number produce new chapter in result file."
+             "e.g.: '5:2:4' is 3 chapters with 5, 2 and 4 games merged, rest of the games will be ignored.")
     parser.add_argument('-o', action='store', metavar="pathname",
                         help='destination file name. default: [your_file_name]_edited.pgn')
 
