@@ -180,7 +180,7 @@ def merge_lines(move_lines: list) -> str:
         odd = not odd
         if keys_len > 1:
             for k, v in list(x for x in _tree.items())[1:]:
-                pgn += '( ' + (f'{move_count}' if odd else '')
+                pgn += '( ' + (f'{move_count}... ' if odd else '')
                 pgn_maker({k: v}, move_count - (not odd), not odd)
                 pgn += ') '
         pgn_maker(_tree[main_move], move_count, odd)
