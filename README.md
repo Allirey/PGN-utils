@@ -57,7 +57,7 @@ Black's pieces are completly misplaced.} (10... d6 $142) 11. O-O d6 1-0
 python3 pgn_utils.py some_pgn_file.pgn a
 ```
 
-###### and we got new created file:
+###### RESULT:
 ###### some_pgn_file_edited.pgn
 ```
 [Event "?"]
@@ -76,7 +76,6 @@ python3 pgn_utils.py some_pgn_file.pgn a
 ## TODO:
 
 * option to keep NAG tags (marks for moves such as "!" or "!?")
-* option to merge games from multiple files (not sure about this, read __Note__ below)
 
 ##### Note:
 Keep in mind: Merges affects only on __games__ in single file. It is NOT that program which merge multiple pgn __files__ in one. For such feature you can write your own program, just type in command line:
