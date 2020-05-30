@@ -59,33 +59,16 @@ def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -
     """
 
     games = []
-    game = ''
-
-    pattern = re.compile(r'\[.*\".*\"\]')
-    with open(pgn_file) as src:
-        is_header = False
-        is_commentary = False
-        for line in src:
-            if bool(re.search(pattern, line)):
-                if not is_header and len(game) > 0 and len(''.join(game.split('\n'))) > 0:
-                    games.append(game)
-                    game = ''
-                is_header = True
-                game += line
-            elif line == '\n':
-                game += line
-                is_header = False
-            else:
-                cleaned_line = ''
-                for ch in line:
-                    if ch in '{}':
-                        is_commentary = {'{': True, '}': False}[ch]
-                    elif not is_commentary:
-                        cleaned_line += ch
-                game += cleaned_line.lstrip()
-
-        if len(game) > 0 and len(''.join(game.split('\n'))) > 0:
-            games.append(game)
+    with open(pgn_file) as f:
+        for game in re.findall(r'(?s)\[.*?(?:\*|1-0|1/2-1/2|0-1)[^\"]', f.read()):
+            cleaned_game = ''
+            is_comment = False
+            for ch in game:
+                if ch in '{}':
+                    is_comment = {'{': True, '}': False}[ch]
+                elif not is_comment:
+                    cleaned_game += ch
+            games.append(cleaned_game)
 
     print(f'\033[94mFound {len(games)} games')
 
@@ -275,5 +258,4 @@ if __name__ == '__main__':
         sys.exit(1)
 
     options = parser.parse_args()
-
     process_pgn(options.filename, options.splitter, options.o)
