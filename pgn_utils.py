@@ -34,24 +34,18 @@ def _get_moves_from_game(pgn: str) -> list:
     return moves
 
 
-def clean_pgn(pgn_file: str) -> list:
-    """removes text commentary from file, can split files by player name or by specific games number in db pgn file
-    additionally return as text pgn file or as list of lists with games
+def clean_pgn(source_file: str) -> list:
+    """removes text commentary from games in pgn file
 
     Args:
-        pgn_file (str): path to pgn file
+        source_file (str): path to pgn file
 
     Returns:
-        list: pgn file as string if splitter not specified, else it return list of lists with games related to
-        the same chapter, which specified by splitter
-
-    Notes:
-        returns list of lists(!) with games, even if there is only 1 game it looks like this:
-        >>> [["...some game content...", ], ]
+        list: list of chess games from source file
     """
 
     games = []
-    with open(pgn_file) as f:
+    with open(source_file) as f:
         for game in re.findall(r'(?s)\[.*?(?:\*|1-0|1/2-1/2|0-1)[^\"]', f.read()):
             cleaned_game = ''
             is_comment = False
