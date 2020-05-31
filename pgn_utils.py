@@ -34,20 +34,12 @@ def _get_moves_from_game(pgn: str) -> list:
     return moves
 
 
-def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -> list:
+def clean_pgn(pgn_file: str) -> list:
     """removes text commentary from file, can split files by player name or by specific games number in db pgn file
     additionally return as text pgn file or as list of lists with games
 
     Args:
         pgn_file (str): path to pgn file
-        splitter (str): rules to split file:
-            'w' - group by white player and merge,
-            'b' - group by black player and merge,
-            'a' - merge all games in file,
-            custom: string with numbers separated with ':' where number is how much games in a row will be merged
-                into one chapter, each number produce new chapter in result file.
-                e.g.: '5:2:4' is 3 chapters with 5, 2 and 4 games merged, rest of the games will be ignored.
-        write_to_file (bool): if True -> writes result into file(-s)
 
     Returns:
         list: pgn file as string if splitter not specified, else it return list of lists with games related to
@@ -69,42 +61,9 @@ def clean_pgn(pgn_file: str, splitter: str = 'w', write_to_file: bool = False) -
                 elif not is_comment:
                     cleaned_game += ch
             games.append(cleaned_game)
-
     print(f'\033[94mFound {len(games)} games')
 
-    result = []
-
-    if splitter and splitter.lower() not in 'wb':
-        splitter = [len(games)] if splitter.lower() == 'a' else list(map(int, splitter.split(':')))
-        i = 0
-        for j in splitter:
-            result.append(games[i:i + j])
-            i += j
-    elif splitter:
-        games_by_player = defaultdict(list)
-        pattern = re.compile({'w': r'\[White \"(.*)\"\]', 'b': r'\[Black \"(.*)\"\]'}.get(splitter))
-
-        for game in games:
-            games_by_player[re.findall(pattern, game)[0].strip()].append(game)
-
-        for games in games_by_player.values():
-            result.append(games)
-
-    dir_name = 'result'
-    if not os.path.isdir(dir_name) and write_to_file:
-        os.mkdir(dir_name)
-
-    if write_to_file:
-        with open(os.path.join(dir_name, _make_file_name(pgn_file)), 'w') as f:
-            f.write(''.join(games))
-
-    if write_to_file and splitter:
-        c = 1
-        for chapter in games:
-            with open(os.path.join(dir_name, f'Chapter {c}.pgn'), 'w') as f:
-                f.write(''.join(chapter))
-            c += 1
-    return result
+    return games
 
 
 def split_game_to_lines(game: str) -> list:
@@ -190,12 +149,12 @@ def merge_lines(move_lines: list) -> str:
     return pgn
 
 
-def process_pgn(file_name: str, splitter: str = 'w', dest_file: str = None):
+def process_pgn(source_file: str, splitter: str = 'w', dest_file: str = None):
     """
     all-in-one. Clean pgn, and merge specified games into chapters and write to result file
 
     Args:
-        file_name (str): source file
+        source_file (str): source file
         splitter (str): rules to split file:
             'w' - group by white player and merge,
             'b' - group by black player and merge,
@@ -209,10 +168,45 @@ def process_pgn(file_name: str, splitter: str = 'w', dest_file: str = None):
         None: create pgn file in result folder, without text commentary, and merged games depending on splitter rule
     """
 
-    dest_file = dest_file if dest_file else _make_file_name(file_name)
+    dest_file = dest_file if dest_file else _make_file_name(source_file)
 
     res = []
-    for games in clean_pgn(file_name, splitter):
+
+    cleaned_games = clean_pgn(source_file)
+    cleaned_grouped_games = []
+
+    if splitter and splitter.lower() not in 'wb':
+        splitter = [len(cleaned_games)] if splitter.lower() == 'a' else list(map(int, splitter.split(':')))
+        i = 0
+        for j in splitter:
+            cleaned_grouped_games.append(cleaned_games[i:i + j])
+            i += j
+    elif splitter:
+        games_by_player = defaultdict(list)
+        pattern = re.compile({'w': r'\[White \"(.*)\"\]', 'b': r'\[Black \"(.*)\"\]'}.get(splitter))
+
+        for game in cleaned_games:
+            games_by_player[re.findall(pattern, game)[0].strip()].append(game)
+
+        for games in games_by_player.values():
+            cleaned_grouped_games.append(games)
+
+    # dir_name = 'result'
+    # if not os.path.isdir(dir_name) and write_to_file:
+    #     os.mkdir(dir_name)
+    #
+    # if write_to_file:
+    #     with open(os.path.join(dir_name, _make_file_name(source_file)), 'w') as f:
+    #         f.write(''.join(games))
+    #
+    # if write_to_file and splitter:
+    #     c = 1
+    #     for chapter in games:
+    #         with open(os.path.join(dir_name, f'Chapter {c}.pgn'), 'w') as f:
+    #             f.write(''.join(chapter))
+    #         c += 1
+
+    for games in cleaned_grouped_games:
         tmp = []
         for game in games:
             tmp += split_game_to_lines(game)
@@ -229,7 +223,7 @@ def process_pgn(file_name: str, splitter: str = 'w', dest_file: str = None):
             header += '[Black "?"]\r\n'
             header += '[Result "*"]\r\n'
 
-            f.write(header + '\r\n' + game + '  *  \r\n\r\n')
+            f.write(header + '\r\n' + game + ' *\r\n\r\n')
             chapter += 1
     print(f'Successfully merged into {len(res)} chapters\nresult file: {dest_file}\033[0m')
 
