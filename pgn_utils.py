@@ -44,17 +44,16 @@ def clean_pgn(source_file: str) -> list:
         list: list of chess games from source file
     """
 
-    games = []
     with open(source_file) as f:
-        for game in re.findall(r'(?s)\[.*?(?:\*|1-0|1/2-1/2|0-1)[^\"]', f.read()):
-            cleaned_game = ''
-            is_comment = False
-            for ch in game:
-                if ch in '{}':
-                    is_comment = {'{': True, '}': False}[ch]
-                elif not is_comment:
-                    cleaned_game += ch
-            games.append(cleaned_game)
+        cleaned_pgn = ''
+        is_comment = False  
+        for ch in f.read():
+            if ch in '{}':
+                is_comment = {'{': True, '}': False}[ch]
+            elif not is_comment:
+                cleaned_pgn += ch
+
+    games = re.findall(r'(?s)\[.*?(?:\*|1-0|1/2-1/2|0-1)[^\"]', cleaned_pgn)
     print(f'\033[94mFound {len(games)} games')
 
     return games
