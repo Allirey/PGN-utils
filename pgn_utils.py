@@ -8,6 +8,17 @@ import argparse
 from collections import deque, defaultdict
 
 
+class ChessMove:
+    def __init__(self, san, parent=None):
+        self.san = san
+        self.tags = []
+        self.parent = parent
+        self.children = []
+
+    def __repr__(self):
+        return self.san + ' ' * bool(self.tags) + ' '.join(self.tags) + ' '
+
+
 def _make_file_name(file_name: str):
     """util func for creating file name, which related to original file name"""
     return file_name.split('/')[-1][:-4] + '_edited.pgn'
@@ -29,7 +40,7 @@ def _get_moves_from_game(pgn: str) -> list:
         if not bool(re.search(re.compile(r'\[.*\".*\"\]'), line)) or line == '\n':
             moves += line
     moves = re.sub(r'\)', ' )', moves)
-    moves = re.sub(r'\$\d+ |\d+\.\.\.|\d+\.|\$\d+', '', moves).split()[:-1]
+    moves = re.sub(r'\d+\.\.\.|\d+\.', '', moves).split()[:-1]
 
     return moves
 
@@ -46,7 +57,7 @@ def clean_pgn(source_file: str) -> list:
 
     with open(source_file) as f:
         cleaned_pgn = ''
-        is_comment = False  
+        is_comment = False
         for ch in f.read():
             if ch in '{}':
                 is_comment = {'{': True, '}': False}[ch]
@@ -83,7 +94,17 @@ def split_game_to_lines(game: str) -> list:
         if move in "()":
             if move == "(":
                 stack.append(move_stack.copy())
-                move_stack = move_stack[:-1]
+
+                # todo optimize
+                appender = 0
+                for token in reversed(move_stack):
+                    if token.startswith('$'):
+                        appender += 1
+                    else:
+                        break
+
+                move_stack = move_stack[:-1 - appender]
+
             elif move == ")":
                 res.append(move_stack)
                 move_stack = stack.pop()
@@ -114,24 +135,42 @@ def merge_lines(move_lines: list) -> str:
     for moves in move_lines:
         curr_node = tree['root']
         for move in moves:
-            if move not in curr_node.keys():
+            if move.startswith('$'):
+                if 'tags' not in curr_node.keys():
+                    curr_node['tags'] = set()
+
+                curr_node['tags'].add(move)
+                continue
+
+            elif move not in curr_node.keys():
                 curr_node[move] = dict()
             curr_node = curr_node[move]
     pgn = ''
 
     def pgn_maker(_tree, move_count=0, odd=True):
         keys_len = len(_tree.keys())
-        if keys_len == 0:
+        if keys_len == 0 or keys_len == 1 and 'tags' in _tree.keys():
             return
+
         nonlocal pgn
-        main_move = list(_tree.keys())[0]
+
+        tags_in_current_tree = bool('tags' in _tree.keys())  # just appender for index, it's weird, I know...
+
+        main_move = list(_tree.keys())[tags_in_current_tree]
+        # todo refactoring
+
+        tags = _tree[main_move].get('tags', [])
+
         if odd:
             move_count += 1
 
-        pgn += ((str(move_count) + '. ') if odd else '') + main_move + ' '
+        pgn += ((str(move_count) + '. ') if odd else '') + main_move + ' ' * bool(tags) + ' '.join(tags) + ' '
         odd = not odd
-        if keys_len > 1:
-            for k, v in list(x for x in _tree.items())[1:]:
+
+        if keys_len > 1 + tags_in_current_tree:
+
+            # todo need refactoring for kostil with 'tags' in _tree check
+            for k, v in list(x for x in _tree.items())[1 + tags_in_current_tree:]:
                 pgn += '( ' + (f'{move_count}... ' if odd else '')
                 pgn_maker({k: v}, move_count - (not odd), not odd)
                 pgn += ') '
