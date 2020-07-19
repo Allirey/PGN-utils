@@ -2,7 +2,6 @@
 
 import sys
 import io
-import os
 import re
 import argparse
 from collections import deque, defaultdict
@@ -213,21 +212,6 @@ def process_pgn(source_file: str, splitter: str = 'w', dest_file: str = None):
 
         for games in games_by_player.values():
             cleaned_grouped_games.append(games)
-
-    # dir_name = 'result'
-    # if not os.path.isdir(dir_name) and write_to_file:
-    #     os.mkdir(dir_name)
-    #
-    # if write_to_file:
-    #     with open(os.path.join(dir_name, _make_file_name(source_file)), 'w') as f:
-    #         f.write(''.join(games))
-    #
-    # if write_to_file and splitter:
-    #     c = 1
-    #     for chapter in games:
-    #         with open(os.path.join(dir_name, f'Chapter {c}.pgn'), 'w') as f:
-    #             f.write(''.join(chapter))
-    #         c += 1
 
     for games in cleaned_grouped_games:
         tmp = []
