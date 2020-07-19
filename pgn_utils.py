@@ -9,10 +9,9 @@ from copy import deepcopy
 
 
 class ChessMove:
-    def __init__(self, san, parent=None):
+    def __init__(self, san):
         self.san = san
         self.tags = []
-        self.parent = parent
         self.children = []
 
     def __repr__(self):
@@ -149,21 +148,18 @@ def merge_lines(move_lines: list) -> str:
             return
 
         move_count += odd
-
         main_move = node.children[0]
 
         nonlocal pgn
-        pgn += ((str(move_count) + '. ') if odd else '') + main_move.san \
-               + ' ' * bool(main_move.tags) + ' '.join(main_move.tags) + ' '
+        pgn += f"{f'{move_count}. ' * odd}{main_move.san}{' ' * bool(main_move.tags)}{' '.join(main_move.tags)} "
 
         odd = not odd
-
         for bro in node.children[1:]:
-            pgn += '( ' + (f'{move_count}... ' if odd else (str(move_count) + '. ')) \
-                   + bro.san + ' ' * bool(bro.tags) + ' '.join(bro.tags) + ' '
+            pgn += f"( {f'{move_count}... ' if odd else f'{move_count}. '}{bro.san}{' ' * bool(bro.tags)}" \
+                   f"{' '.join(bro.tags)} "
+
             pgn_maker(bro, move_count, odd)
             pgn += ') '
-
         pgn_maker(node.children[0], move_count, odd)
 
     pgn_maker(tree)
