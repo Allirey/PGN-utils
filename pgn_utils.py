@@ -6,6 +6,7 @@ import os
 import re
 import argparse
 from collections import deque, defaultdict
+from copy import deepcopy
 
 
 class ChessMove:
@@ -16,7 +17,7 @@ class ChessMove:
         self.children = []
 
     def __repr__(self):
-        return self.san + ' ' * bool(self.tags) + ' '.join(self.tags) + ' '
+        return self.san + ' ' * bool(self.tags) + ' '.join(self.tags)
 
 
 def _make_file_name(file_name: str):
@@ -40,6 +41,8 @@ def _get_moves_from_game(pgn: str) -> list:
         if not bool(re.search(re.compile(r'\[.*\".*\"\]'), line)) or line == '\n':
             moves += line
     moves = re.sub(r'\)', ' )', moves)
+    moves = re.sub(r'o-o-o|O-O-O', '0-0-0', moves)
+    moves = re.sub(r'o-o|O-O', '0-0', moves)
     moves = re.sub(r'\d+\.\.\.|\d+\.', '', moves).split()[:-1]
 
     return moves
@@ -87,31 +90,27 @@ def split_game_to_lines(game: str) -> list:
 
     moves = _get_moves_from_game(game)
 
-    stack = deque()
+    variations_stack = deque()
+    moves_stack = []
     res = []
-    move_stack = []
-    for move in moves:
-        if move in "()":
-            if move == "(":
-                stack.append(move_stack.copy())
 
-                # todo optimize
-                appender = 0
-                for token in reversed(move_stack):
-                    if token.startswith('$'):
-                        appender += 1
-                    else:
-                        break
+    last_move = None
 
-                move_stack = move_stack[:-1 - appender]
-
-            elif move == ")":
-                res.append(move_stack)
-                move_stack = stack.pop()
+    for token in moves:
+        if token in "()":
+            if token == "(":
+                variations_stack.append(deepcopy(moves_stack))
+                moves_stack = moves_stack[:-1]
+            elif token == ")":
+                res.append(moves_stack)
+                moves_stack = variations_stack.pop()
             continue
+        elif token.startswith('$'):
+            last_move.tags.append(token)
         else:
-            move_stack.append(move)
-    res.append(move_stack)
+            last_move = ChessMove(token)
+            moves_stack.append(last_move)
+    res.append(moves_stack)
 
     return res[::-1]
 
@@ -131,52 +130,44 @@ def merge_lines(move_lines: list) -> str:
         >>> '1. Nf3 ( 1. e4 c5 ) c5 ( b6 2. d4 )'
     """
 
-    tree = dict(root=dict())
+    tree = ChessMove('')
+
     for moves in move_lines:
-        curr_node = tree['root']
+        curr_node = tree
         for move in moves:
-            if move.startswith('$'):
-                if 'tags' not in curr_node.keys():
-                    curr_node['tags'] = set()
+            if move.san not in [move.san for move in curr_node.children]:
+                curr_node.children.append(move)
+                curr_node = move
+            else:
+                for m in curr_node.children:
+                    if move.san == m.san:
+                        curr_node = m
 
-                curr_node['tags'].add(move)
-                continue
-
-            elif move not in curr_node.keys():
-                curr_node[move] = dict()
-            curr_node = curr_node[move]
     pgn = ''
 
-    def pgn_maker(_tree, move_count=0, odd=True):
-        keys_len = len(_tree.keys())
-        if keys_len == 0 or keys_len == 1 and 'tags' in _tree.keys():
+    def pgn_maker(node, move_count=0, odd=True):
+        if not len(node.children):
             return
 
+        move_count += odd
+
+        main_move = node.children[0]
+
         nonlocal pgn
+        pgn += ((str(move_count) + '. ') if odd else '') + main_move.san \
+               + ' ' * bool(main_move.tags) + ' '.join(main_move.tags) + ' '
 
-        tags_in_current_tree = bool('tags' in _tree.keys())  # just appender for index, it's weird, I know...
-
-        main_move = list(_tree.keys())[tags_in_current_tree]
-        # todo refactoring
-
-        tags = _tree[main_move].get('tags', [])
-
-        if odd:
-            move_count += 1
-
-        pgn += ((str(move_count) + '. ') if odd else '') + main_move + ' ' * bool(tags) + ' '.join(tags) + ' '
         odd = not odd
 
-        if keys_len > 1 + tags_in_current_tree:
+        for bro in node.children[1:]:
+            pgn += '( ' + (f'{move_count}... ' if odd else (str(move_count) + '. ')) \
+                   + bro.san + ' ' * bool(bro.tags) + ' '.join(bro.tags) + ' '
+            pgn_maker(bro, move_count, odd)
+            pgn += ') '
 
-            # todo need refactoring for kostil with 'tags' in _tree check
-            for k, v in list(x for x in _tree.items())[1 + tags_in_current_tree:]:
-                pgn += '( ' + (f'{move_count}... ' if odd else '')
-                pgn_maker({k: v}, move_count - (not odd), not odd)
-                pgn += ') '
-        pgn_maker(_tree[main_move], move_count, odd)
+        pgn_maker(node.children[0], move_count, odd)
 
-    pgn_maker(tree['root'])
+    pgn_maker(tree)
 
     return pgn
 
